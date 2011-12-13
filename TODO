@@ -1,0 +1,8 @@
+- basic form, html and css
+- javascript with pooling
+- connection_class
+- session mechanism
+- deployment
+- remove dep. AnyEvent::HTTPD, JSON and UUID::Tiny
+- improve tests
+- client tests
