@@ -1,5 +1,4 @@
-use strict;
-use warnings;
+use common::sense;
 package Upload::Pipe;
 
 use AnyEvent;
@@ -46,6 +45,6 @@ $httpd->reg_cb (
 );
 
 
-$httpd->run;	
+#$httpd->run;	
 
 1;
