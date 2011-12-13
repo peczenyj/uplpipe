@@ -5,6 +5,7 @@ use AnyEvent;
 use AnyEvent::HTTPD;
 use MIME::Types;
 use JSON;
+use UUID::Tiny;
 
 my $mt = MIME::Types->new();
 
@@ -26,10 +27,14 @@ $httpd->reg_cb (
    '/upload' => sub {
       my ($httpd, $req) = @_;
 
+	  use Data::Dumper;
+	  AE::log alert => $req->url->as_string;
+	  AE::log alert => $req->method;
+	
       $req->respond ({ 
 		content => [
 			$mt->mimeTypeOf('html'), 
-			"OK"
+			"OK " . UUID_to_string(create_UUID(UUID_V4))
 		]
 	   });
    },
