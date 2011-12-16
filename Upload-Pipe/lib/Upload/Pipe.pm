@@ -4,17 +4,8 @@ package AnyEvent::HTTPD::HTTPConnection2;
 
 use parent 'AnyEvent::HTTPD::HTTPConnection';
 
-our $percentage = {};
-
-sub Y{ # Y combinator, maybe it is not necessary...
-	my ($f) = @_; 
-	sub {
-		my ($x) = @_; $x->($x)
-	}->(sub {
-		my ($y) = @_; 
-		$f->(sub { $y->($y)->(@_)})
-	})
-};
+our $DB = {};
+use constant { CHUNK => 8196 };
 
 #
 # Problem:
@@ -40,45 +31,75 @@ sub push_header {
             $self->error (599 => "garbled headers");
          }
 		
-		 my $url = $self->{last_header}->[1];
-
          push @{$self->{last_header}}, $hdr;
 
          if (defined $hdr->{'content-length'}) {
-
-			my $max;
-			my $buffer = "";
-			my $chunk = 8196;
-			my $cl = $max = $hdr->{'content-length'};
 			
-			$percentage->{$url} = 0;
-			$self->{hdl}->unshift_read( chunk => (($cl > $chunk)? $chunk : $cl) , Y(sub {	
-					my $f = shift;
-					sub {
-						my($obj, $data) = @_;
-					
-						$buffer .= $data; 
-						$cl -= length $data; 
-						$percentage->{$url} = (100 * ($max-$cl)/$max);
-
-						AE::log alert => "percentage for $url : $percentage->{$url}";
-						if($cl > 0){
-							$obj->unshift_read( chunk => (($cl > $chunk)? $chunk : $cl), $f); 
-						} else {	
-							$self->handle_request (@{$self->{last_header}}, $buffer);
-						}
-					}
-				})
-			);
+			$self->{hdl}->unshift_read(  $self->strategy_for_content_type($hdr)  );
 			
          } else {
+	
             $self->handle_request (@{$self->{last_header}});
+
          }
       }
    );
 }
 
-1;
+sub strategy_for_content_type {
+	my ($self, $hdr) = @_;
+	
+	my ($ctype, $bound) = AnyEvent::HTTPD::HTTPConnection::_content_type_boundary ($hdr->{'content-type'});
+	my $buffer = "";
+
+	if ($ctype eq 'multipart/form-data') {  #      $cont = $self->decode_multipart ($cont, $bound);
+		my $buffer = "";
+		my $cl     = $hdr->{'content-length'};
+		my $url    = $self->{last_header}->[1];
+		
+		
+		$DB->{$url} = {total => $cl,remaining => $cl};
+		
+		return ( chunk =>  (($cl > CHUNK)? CHUNK : $cl),
+				$self->read_data_using_chunks_cb($buffer,$cl,$url)
+				);
+	} 
+	
+	(chunk => $hdr->{'content-length'}, 
+		sub {
+       		my ($hdl, $data) = @_;
+       		$self->handle_request (@{$self->{last_header}}, $data);
+    	})
+}
+
+sub read_data_using_chunks_cb {
+	my ($self,$buffer,$cl,$url) = @_;
+	
+	# weaken self ?
+	
+	my $f; $f = sub {
+		my($obj, $data) = @_;
+	
+		$buffer .= $data; 
+		$cl -= length $data; 
+		$DB->{$url}->{remaining} = $cl;
+		
+		AE::log alert => "percentage for $url : $DB->{$url}->{remaining}";
+		if($cl > 0){
+			$obj->unshift_read( chunk => (($cl > CHUNK)? CHUNK : $cl), $f); 
+		} else {	
+			$self->my_handle_request (@{$self->{last_header}}, $buffer);
+		}
+	};
+	
+	$f
+}
+
+sub my_handle_request{
+	my $self = shift;
+	
+	$self->handle_request(@_)
+}
 
 1;
 
@@ -88,7 +109,7 @@ use AnyEvent;
 use AnyEvent::HTTPD;
 use JSON;
 use MIME::Types;
-
+use Data::Dumper;
 #
 # Proof of concept using AnyEvent::HTTPD
 # AnyEvent is a framework to do event-based programming and provides non-blocking I/O
@@ -105,6 +126,9 @@ sub upload_controller{
 	my $method = $req->method;
 	AE::log alert => "Upload :: para $method $url";
 	
+	use Data::Printer;
+	p $req->parm('f');
+	
 	$req->respond ({ 
 		content => [
 			"text/html", 
@@ -114,18 +138,26 @@ sub upload_controller{
 	$httpd->stop_request
 }
 
-my $x=0;
 sub status_controller{
 	my ($httpd, $req) = @_;
 
 	my $url = $req->url->as_string;
+	
+	$url =~ s/status/upload/;
+	
 	my $method = $req->method;
+	
 	AE::log alert => "status :: para $method $url";
+	
+	return unless exists $AnyEvent::HTTPD::HTTPConnection2::DB->{$url};
+	
+	my $data = $AnyEvent::HTTPD::HTTPConnection2::DB->{$url};
+	my $progress = 1.0 - $data->{remaining}/$data->{total};
 	
 	$req->respond ({ 
 		content => [
-			MIME::Types::by_suffix("a.json")->[0], 
-			to_json({ progress => $x+=10 })
+			'application/json', 
+			to_json({ progress => $progress})
 		]
 	});
 	
@@ -148,8 +180,7 @@ sub desc_controller{ # not finished yet
 	my ($httpd, $req) = @_;
 	
 	my $filepath = $req->parm('remote-file');
-	my $description = $req->parm('description');
-	
+	my $description = $req->parm('description');	
 	
 	$req->respond ({ content => ['text/html', <<EOT ] });
 	<html>
@@ -195,7 +226,7 @@ sub run{
 	$httpd->reg_cb (
 		'/upload'      => \&upload_controller,
 		'/status'      => \&status_controller,
-#		'/submit'      => \&submit_controller,
+		'/submit'      => \&submit_controller,
 		'/'            => \&index_controller,
 		''             => \&send404,
 	);
