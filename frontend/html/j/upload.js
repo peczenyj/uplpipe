@@ -4,39 +4,56 @@ Util = {
 	S12 : function(){ return Util.S4()+Util.S4()+Util.S4();}
 };
 
+function UploadProgressReporter(options){
+	this.form  = options.form;
+	this.panel = $("#" + options.panel_id);
+	this.template_progress  = "Status {VALUE} %";
+	this.template_completed = "Status: 100%. <a href=\"{LINK}\">Uploaded to here.</a>"
+}
+
+UploadProgressReporter.prototype = {
+	show_start : function(){
+		this.form.hide();
+		
+		this.panel.html(template_progress.replace("{VALUE}",0));
+	},
+	show_progress: function(data){
+		
+		this.panel.html(template_progress.replace("{VALUE}",data.percentage));	
+	},
+	show_completed: function(data){
+		
+		this.panel.html(template_completed.replace("{LINK}",data.link));
+	}	
+}
+
 function UploadProgressObserver(form,options){
 	this.form          = form;
 	this.options       = options;
 	this.last_progress = -1.0;
+	this.upr           = new UploadProgressReporter(options);
 }
 
 UploadProgressObserver.prototype = {
 	init : function(){
+		this.upr.show_start();
+		this.create_interval(this.options.interval);
+	},
+	create_interval : function(interval){
 		var self = this;
-		var interval = this.options.interval;
+			
 		this.interval_id = setInterval(function(){ self.load(); } ,interval);
 	},
-	show_progress: function(data){
-		var template = "Status {VALUE} %";
-		
-		var panel = $("#" + this.options.panel_id);
-		panel.html(template.replace("{VALUE}",data.percentage));	
-	},
-	show_completed: function(data){
-		var template = "Status: 100%. <a href=\"{LINK}\">Uploaded to here.</a>";
-		var panel = $("#" + this.options.panel_id);
-		panel.html(template.replace("{LINK}",data.link));
-	},		
 	on_progress : function(data){
 		this.last_progress = data.percentage;
-		this.show_progress(data);		
+		this.upr.show_progress(data);		
 	},
 	_stopAjaxLoop : function(id){
 		clearInterval(id);
 	},
 	on_complete : function(data){
 		this._stopAjaxLoop(this.interval_id);
-		this.show_completed(data);		
+		this.upr.show_completed(data);		
 	},		
 	on_ajax_success: function(data) {
 		if(data.status === "complete" || data.percentage === 100.0){

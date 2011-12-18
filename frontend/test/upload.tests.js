@@ -291,7 +291,7 @@ function main(){
 	module('UploadProgressObserver');
 	
 	test("constructor should init form, options and last_progress attribute", function(){
-		expect(3);
+		expect(4);
 		
 		var form = $('<form></form>');
 		var options = {
@@ -307,6 +307,7 @@ function main(){
 		equals(upo.form , form);
 		equals(upo.options, options);
 		equals(upo.last_progress,-1.0);
+		equals(typeof(upo.upr), "object");
 	});
 	
 	test("method _generateStatusUrl should concat /status at the end of url", function(){
@@ -482,25 +483,111 @@ function main(){
 		upo.on_ajax_success(data);
 	});		
 		
-	test("method on_complete should call _stopAjaxLoop and show_completed", function(){});
-	test("method on_progress should update last_progress and call show_progress", function(){});
-	test("method show_progress shold creat an html", function(){});
-	test("method show_completed shold creat an html, and enable the second form", function(){});
-	test("method on_erro should call _stopAjaxLoop and report error", function(){});
-	test("function _stopAjaxLoop should clean the interval id",function(){});
-	test("function init should start an interval with load method",function(){});
+	test("method on_complete should call _stopAjaxLoop and upr.show_completed", function(){
+		expect(2);
+		var form = $('<form></form>');
+		var options = {
+			baseurl : "/scalaExamples/upload",
+			target_id : "the-form",
+			interval : 2000,
+			panel_id : "panel",
+			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
+		};
+		
+		var data = { status : "complete" };
+		var upo = new UploadProgressObserver(form,options);		
+		
+		var call_stopAjaxLoop = false;
+		upo._stopAjaxLoop = function(){ call_stopAjaxLoop = true;}
+		
+		var call_upr_show_completed = false;
+		upo.upr.show_completed = function(){ call_upr_show_completed = true; }
+		
+		upo.on_complete(data);
+		
+		ok(call_stopAjaxLoop);
+		ok(call_upr_show_completed);
+	});
 	
-/* falta testar:
-
-on_complete
-_stopAjaxLoop
-on_progress
-show_progress
-show_completed
-init
-
-on_error ??
-*/
+	test("method on_progress should update last_progress and call upr.show_progress", function(){
+		expect(3);
+		var form = $('<form></form>');
+		var options = {
+			baseurl : "/scalaExamples/upload",
+			target_id : "the-form",
+			interval : 2000,
+			panel_id : "panel",
+			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
+		};
+		
+		var data = { percentage : 50 };
+		var upo = new UploadProgressObserver(form,options);		
+				
+		var call_show_progress = false;
+		upo.upr.show_progress = function(){ call_show_progress = true; }
+		
+		equal(upo.last_progress,-1.0);
+		
+		upo.on_progress(data);
+		
+		equal(upo.last_progress,data.percentage);
+		ok(call_show_progress);		
+		
+	});
+	test("method on_erro should call _stopAjaxLoop and report error", function(){
+		expect(1);
+		var form = $('<form></form>');
+		var options = {
+			baseurl : "/scalaExamples/upload",
+			target_id : "the-form",
+			interval : 2000,
+			panel_id : "panel",
+			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
+		};
+		
+		var data = { percentage : 50 };
+		var upo = new UploadProgressObserver(form,options);		
+		
+		var call_stopAjaxLoop = false;
+		upo._stopAjaxLoop = function(){ call_stopAjaxLoop = true;}
+		
+		upo.on_error(data);
+		
+		ok(call_stopAjaxLoop);
+	});
+	
+	test("function init should call create_interval and upr.show_start",function(){
+		expect(2);
+		var form = $('<form></form>');
+		var options = {
+			baseurl : "/scalaExamples/upload",
+			target_id : "the-form",
+			interval : 2000,
+			panel_id : "panel",
+			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
+		};
+		
+		var upo = new UploadProgressObserver(form,options);	
+		
+		var call_create_interval = false;
+		upo.create_interval = function(){ call_create_interval = true;};
+		
+		var call_upr_show_start = false;
+		upo.upr.show_start = function(){call_upr_show_start = true;};
+		
+		upo.init();
+		
+		ok(call_create_interval);
+		ok(call_upr_show_start);	
+	});
+	
+	test("function _stopAjaxLoop should clean interval",function(){
+		expect(1);
+	});
+	
+	test('function create_interval should create interval', function(){
+		expect(1);
+	})
 
 	module('Util');
 
