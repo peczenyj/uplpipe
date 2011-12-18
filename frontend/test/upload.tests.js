@@ -589,6 +589,13 @@ function main(){
 		expect(1);
 	})
 
+	module('UploadProgressReporter');
+	
+	test('constructor',function(){});
+	test('method show_start',function(){});
+	test('method show_progress',function(){});
+	test('method show_completed',function(){});
+			
 	module('Util');
 
 	test("Util.S4 should return some random hex value", function(){
