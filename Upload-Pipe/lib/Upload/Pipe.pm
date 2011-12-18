@@ -2,10 +2,11 @@ use common::sense;
 
 package AnyEvent::HTTPD::HTTPConnection2;
 
+use Scalar::Util qw/weaken/;
 use parent 'AnyEvent::HTTPD::HTTPConnection';
 
-our $DB = {};
 use constant { CHUNK => 8196 };
+our $DB = {};
 
 #
 # Problem:
@@ -20,6 +21,8 @@ use constant { CHUNK => 8196 };
 #
 sub push_header {
    my ($self, $hdl) = @_;
+
+   # weaken $self ?
 
    $self->{hdl}->unshift_read (line =>
       qr{(?<![^\012])\015?\012}o,
@@ -50,7 +53,6 @@ sub strategy_for_content_type {
 	my ($self, $hdr) = @_;
 	
 	my ($ctype, $bound) = AnyEvent::HTTPD::HTTPConnection::_content_type_boundary ($hdr->{'content-type'});
-	my $buffer = "";
 
 	if ($ctype eq 'multipart/form-data') {  #      $cont = $self->decode_multipart ($cont, $bound);
 		my $buffer = "";
@@ -108,8 +110,9 @@ package Upload::Pipe;
 use AnyEvent;
 use AnyEvent::HTTPD;
 use JSON;
-use MIME::Types;
-use Data::Dumper;
+use IO::File;
+use MIME::Types 'by_suffix';
+
 #
 # Proof of concept using AnyEvent::HTTPD
 # AnyEvent is a framework to do event-based programming and provides non-blocking I/O
@@ -119,6 +122,8 @@ use Data::Dumper;
 #  the entire body, and I can extend this class easily
 #
 
+use constant ( BASEDIR => "/Users/peczenyj/pessoal/up/uplpipe/Upload-Pipe/public" );
+
 sub upload_controller{
 	my ($httpd, $req) = @_;
 	
@@ -126,8 +131,8 @@ sub upload_controller{
 	my $method = $req->method;
 	AE::log alert => "Upload :: para $method $url";
 	
-	use Data::Printer;
-	p $req->parm('f');
+	#use Data::Printer;
+	#p $req->parm('f');
 	
 	$req->respond ({ 
 		content => [
@@ -197,21 +202,8 @@ sub index_controller {
 	my ($httpd, $req) = @_;
 	AE::log alert => "request para o index !";
 	$req->respond ({ content => ['text/html', <<'EOT'  ] });
-<html>
-<head><title>uplpipe</title>
-<script 
-src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" 
-type="text/javascript" language="javascript"></script>
-</head>
-<body>
-<h1>uplpipe</h1>
-<div id="uplpipe1">
-<form id="uplpipe_form" method="post" enctype="multipart/form-data" action="#">
-<input type="file" name="f" id="uplpipe_f">
-</form>
-</div>
-</body>
-</html>	
+	<html> ... TODO
+	</html>
 EOT
 	
 	$httpd->stop_request 
@@ -227,6 +219,27 @@ sub run{
 		'/upload'      => \&upload_controller,
 		'/status'      => \&status_controller,
 		'/submit'      => \&submit_controller,
+		'/static'      => sub{
+			
+			my ($httpd, $req) = @_; 
+			my $method = $req->method;
+			
+			return unless $method eq 'GET';
+			
+			my $path = $req->url->path;
+			$path =~ s/\/static//;
+			
+			AE::log alert => "Enviando arquivo estatico $path";
+
+			$req->respond ({ 
+				content => [
+					by_suffix($path)->[0], 
+					IO::File->new(BASEDIR . $path)
+				]
+			});
+			$httpd->stop_request			
+			
+		},
 		'/'            => \&index_controller,
 		''             => \&send404,
 	);

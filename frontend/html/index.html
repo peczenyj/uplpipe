@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<title>uplpipe</title>
+		<style type="text/css" media="screen">
+
+		</style>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="./j/upload.js" type="text/javascript" charset="utf-8"></script>
+		
+	</head>
+	<body>
+		<div id="panel"></div>
+		
+		<div>
+			<input type="file" name="f" id="f"/>
+		</div>
+		
+		<div>
+			<form id="the-form" action="#" method="post" accept-charset="utf-8">
+				<input type="hidden" name="file"/>
+				<textarea name="message" rows="4" cols="40"></textarea></p>
+				<input type="submit" value="Continue &rarr;" disabled="true">
+			</form>
+		</div>
+		<script type="text/javascript" charset="utf-8">
+		$(
+			new UplPipe($('#f'),{
+				baseurl : "/scalaExamples/upload",
+				target_id : "the-form",
+				interval : 2000,
+				panel_id : "panel"
+			}).init()
+		);
+		</script>		
+	</body>
+</html>
