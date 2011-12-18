@@ -1,7 +1,7 @@
 import javax.servlet.http.{HttpServlet,
   HttpServletRequest => HSReq, HttpServletResponse => HSResp}
 
-object UploadScalaServlet {
+object UploadController {
 	var p = 0;
 	def value = {
 		p += 10
@@ -9,7 +9,7 @@ object UploadScalaServlet {
 	}
 }
 
-class UploadScalaServlet extends HttpServlet
+class UploadController extends HttpServlet
 {
   def message = "{ \"status\" : \"progress\", \"percentage\": "+ UploadScalaServlet.value +" , \"link\" : \"google.com\" }"; 
 

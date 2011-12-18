@@ -18,7 +18,7 @@
       <include name="code.scala" />
     </scalac>
 
-    <war destfile="scalaExamples.war" webxml="etc/web.xml">
+    <war destfile="scala.war" webxml="etc/web.xml">
       <fileset dir="../frontend/html"/>
       <lib dir="${scala.home}/lib">
         <include name="scala-library.jar" />
@@ -31,7 +31,7 @@
   </target>
   
   <target name="clean">
-    <delete file="scalaExamples.war" />
+    <delete file="scala.war" />
     <delete dir="classes" />
   </target>
   

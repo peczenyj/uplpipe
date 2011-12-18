@@ -3,19 +3,14 @@
     "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
-
   <!-- for Tomcat 5.x, you must use x$$class instead of x$class !-->
   <servlet>
-    <servlet-name>helloWorld</servlet-name>
-    <servlet-class>HelloScalaServlet</servlet-class>
-  </servlet>
-  <servlet>
-    <servlet-name>uploadHelloWorld</servlet-name>
-    <servlet-class>UploadScalaServlet</servlet-class>
+    <servlet-name>uploadController</servlet-name>
+    <servlet-class>UploadController</servlet-class>
   </servlet>
 
   <servlet-mapping>
-    <servlet-name>uploadHelloWorld</servlet-name>
+    <servlet-name>uploadController</servlet-name>
     <url-pattern>/upload/*</url-pattern>
   </servlet-mapping>
 </web-app>
