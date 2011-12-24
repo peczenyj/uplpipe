@@ -1,19 +1,50 @@
 import javax.servlet.http.{HttpServlet,
-  HttpServletRequest => HSReq, HttpServletResponse => HSResp}
+  	HttpServletRequest => HSReq, 
+	HttpServletResponse => HSResp
+}
+import java.io.{
+	FileOutputStream,
+	FileInputStream
+}
+import javax.servlet.annotation.{
+	MultipartConfig,
+	WebServlet
+}
+
+@WebServlet(name = "UploadServlet", urlPatterns = Array("/upload/*"))
+@MultipartConfig(maxFileSize=1024*1024*50, maxRequestSize=1024*1024*50)
+class TestServlet extends HttpServlet {
+	
+	override def doPost(req : HSReq, resp : HSResp) = 
+	{
+		resp.getWriter().print(
+			scala.io.Source.fromInputStream(
+				req.getInputStream()
+			).getLines().mkString("\r\n")
+		)
+	}
+	
+	override def doGet(req : HSReq, resp : HSResp) =
+	{
+		resp.setHeader("Content-Type","application/json")
+		resp.getWriter().print("{ oi : 1}")	
+	}	
+}
 
 object UploadController {
-	var p = 0;
-	def value = {
-		p += 10
-		p
-	}
+	var p = 0l;
+	var max = 1l;
+	
+	def clean = { p = 0l; max=1l;}
+	def value = 100.0 * p/max
+	def incr(n : Long) = { p = p + n }
+	def dmax(n : Long) = { max = n } 
+	def pp = p
 }
 
 class UploadController extends HttpServlet
 {
-  def message = "{ \"status\" : \"progress\", \"percentage\": "+ UploadScalaServlet.value +" , \"link\" : \"google.com\" }"; 
-
-  def value = 50
+  def message = "{ \"status\" : \"progress\", \"percentage\": "+ UploadController.value +" , \"link\" : \"google.com\" }"; 
 
   override def doGet(req : HSReq, resp : HSResp) =
   {
@@ -21,8 +52,29 @@ class UploadController extends HttpServlet
 	resp.getWriter().print(message)	
   }
     
-  override def doPost(req : HSReq, resp : HSResp) =
-    resp.getWriter().print(req.getPart("f").getSize())
+  override def doPost(req : HSReq, resp : HSResp) = {
+	UploadController.clean	
+	
+	var is = req.getInputStream();
+	val output = new FileOutputStream("/tmp/x")
+	val buffer = new Array[ Byte ]( 8196 )
+	var max = req.getIntHeader("Content-Length")
+	
+	UploadController.dmax(max)	
+	
+	var readed = 0
+	do{
+		var y= is.read(buffer,0, buffer.length)
+		output.write(buffer,0,y)
+		readed += y
+		UploadController.incr(y)
+	} while(max > readed);
+
+	output.flush()
+	output.close()
+
+    resp.getWriter().print("ok" +  max + "," + UploadController.pp + "," + UploadController.value  + "," + req.getHeader("Content-Type"));
+  }
 }
 
 abstract class BaseServlet extends HttpServlet
@@ -50,26 +102,27 @@ abstract class BaseServlet extends HttpServlet
     resp.getWriter().print(message)
   }
 }
-class NamedHelloWorldServlet extends BaseServlet
+class MessageController extends BaseServlet
 {
   override def message =
     if (validate(param))
       <HTML>
-        <HEAD><TITLE>Hello!</TITLE></HEAD>
-        <BODY>Hello, {param("firstName")} {param("lastName")}! It is now {currentTime}.</BODY>
+        <HEAD><TITLE>upload</TITLE></HEAD>
+        <BODY>
+			<p>ok, <a href='{param("file")}'>download</a></p> 
+			<p>message: {param("message")}</p>
+		</BODY>
       </HTML>
     else
       <HTML>
         <HEAD><TITLE>Error!</TITLE></HEAD>
-        <BODY>How can we be friends if you don't tell me your name?!?</BODY>
+        <BODY>no file can be found</BODY>
       </HTML>
   
   def validate(p : Map[String, String]) : Boolean =
   {
     p foreach {
-      case ("firstName", "") => return false
-      case ("lastName", "") => return false
-      //case ("lastName", v) => if (v.contains("e")) return false
+      case ("file", "") => return false
       case (_, _) => ()
     }
     true

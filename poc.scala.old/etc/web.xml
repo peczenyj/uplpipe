@@ -1,16 +1,8 @@
-<!DOCTYPE web-app 
-    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" 
-    "http://java.sun.com/dtd/web-app_2_3.dtd">
-
-<web-app>
+<web-app
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0">
   <!-- for Tomcat 5.x, you must use x$$class instead of x$class !-->
-  <servlet>
-    <servlet-name>uploadController</servlet-name>
-    <servlet-class>UploadController</servlet-class>
-  </servlet>
 
-  <servlet-mapping>
-    <servlet-name>uploadController</servlet-name>
-    <url-pattern>/upload/*</url-pattern>
-  </servlet-mapping>
 </web-app>
