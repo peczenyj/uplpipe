@@ -4,9 +4,12 @@ Util = {
 	S12 : function(){ return Util.S4()+Util.S4()+Util.S4();}
 };
 
-function UploadProgressReporter(options){
-	this.form  = options.form;
+function UploadProgressReporter(form,options){
+	this.form  = form;
 	this.panel = $("#" + options.panel_id);
+	this.target = $("#" + options.target_id);
+	this.message_url = "{URL}/message".replace("{URL}",options.upload_url);
+	
 	this.template_progress  = "Status {VALUE} %";
 	this.template_completed = "Status: 100%. <a href=\"{LINK}\">Uploaded to here.</a>"
 }
@@ -15,15 +18,18 @@ UploadProgressReporter.prototype = {
 	show_start : function(){
 		this.form.hide();
 		
-		this.panel.html(template_progress.replace("{VALUE}",0));
+		this.panel.html(this.template_progress.replace("{VALUE}",0));
 	},
 	show_progress: function(data){
 		
-		this.panel.html(template_progress.replace("{VALUE}",data.percentage));	
+		this.panel.html(this.template_progress.replace("{VALUE}",data.percentage));	
 	},
 	show_completed: function(data){
 		
-		this.panel.html(template_completed.replace("{LINK}",data.link));
+		this.panel.html(this.template_completed.replace("{LINK}",data.link));
+		this.target.attr('action','/scala/message');
+		$('input[name=file]',this.target).attr("value",data.link)
+		$('input[type=submit]',this.target).removeAttr('disabled');
 	}	
 }
 
@@ -31,7 +37,7 @@ function UploadProgressObserver(form,options){
 	this.form          = form;
 	this.options       = options;
 	this.last_progress = -1.0;
-	this.upr           = new UploadProgressReporter(options);
+	this.upr           = new UploadProgressReporter(form,options);
 }
 
 UploadProgressObserver.prototype = {
