@@ -1,0 +1,10 @@
+set name := "uplpipe"
+set libraryDependencies += "javax.servlet" % "servlet-api" % "3.0"
+session save
+reload
+update
+reload
+update
+compile
+package
+exit
