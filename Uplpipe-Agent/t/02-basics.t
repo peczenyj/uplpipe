@@ -219,7 +219,7 @@ subtest "failure in unlink file" => sub {
 	ok(! $result, "process status should be true");
 	ok_s3($s3);
 	ok_ua($ua);
-	ok_logger_error($logger, 'one or more errors: No such file or directory');	
+	ok_logger_error($logger, 'one or more errors for file /not/exist/a: No such file or directory');	
 };
 
 sub get_ua_invalid{
@@ -263,7 +263,7 @@ subtest "failure in update rest api" => sub {
 	ok(! $result, "process status should be true");
 	ok_s3($s3);
 	ok_ua_invalid($ua);
-	ok_logger_error($logger, 'one or more errors: ops');	
+	ok_logger_error($logger, 'one or more errors for file /not/exist/a: ops');	
 };
 
 sub get_s3_invalid {
@@ -314,7 +314,7 @@ subtest "failure in update acl in s3" => sub {
 	ok(! $result, "process status should be true");
 	ok_s3_invalid($s3);
 	ok_ua_not_call($ua);
-	ok_logger_error($logger, 'one or more errors: >err:>errstr');	
+	ok_logger_error($logger, 'one or more errors for file /not/exist/a: >err:>errstr');	
 };
 
 sub get_s3_invalid2{
@@ -366,7 +366,7 @@ subtest "upload successfull but head_key shows different etag/md5" => sub {
 	ok(! $result, "process status should be false");
 	ok_s3_invalid2($s3);
 	ok_ua_invalid2($ua);
-	ok_logger_error($logger, 'one or more errors: store a in s3 but check file returns false');
+	ok_logger_error($logger, 'one or more errors for file /not/exist/a: store a in s3 but check file returns false');
 };
 
 sub get_s3_invalid3{
@@ -405,7 +405,7 @@ subtest "failure to upload to s3" => sub {
 	ok(! $result, "process status should be false");
 	ok_s3_invalid2($s3);
 	ok_ua_invalid2($ua);
-	ok_logger_error($logger, 'one or more errors: >err:>errstr');	
+	ok_logger_error($logger, 'one or more errors for file /not/exist/a: >err:>errstr');	
 };
 
 done_testing();

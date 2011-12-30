@@ -1,6 +1,7 @@
 use common::sense;
 use Uplpipe::Agent;
 use Daemon::Generic;
+use Config::Tiny;
 use POE;
 use POE::Component::DirWatch;
 use Log::Log4perl;
