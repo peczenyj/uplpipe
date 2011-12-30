@@ -242,12 +242,16 @@ aws_secret_access_key=fake_aws_secret_access_key
 
 bucketname=uplpipe
 uplpipe_url=http://localhost:8080/scala/upload/:id/download
-directory=/tmp/incoming
-interval=10
 
 [lwp_user_agent]
 
 timeout=1
+
+[daemon]
+
+directory=/tmp/incoming
+interval=10
+
 
 =head1 METHODS
 
