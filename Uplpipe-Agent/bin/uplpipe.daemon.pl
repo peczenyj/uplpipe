@@ -23,7 +23,7 @@ sub gd_preconfig{
 sub gd_run {
 	$logger->info("SERVER START");
 
-	my $watcher = POE::Component::DirWatch−>new(
+	my $watcher = POE::Component::DirWatch->new(
 		alias      => 'dirwatch',
 		directory  =>  $conf->{daemon}->{directory},
 		filter     => sub { $_[0] !~ /^incoming.*$/ },
@@ -33,7 +33,7 @@ sub gd_run {
 		interval   => $conf->{daemon}->{interval},
 	);
 
-	$poe_kernel−>run;
+	$poe_kernel->run;
 	$logger->info("SERVER STOP");
 }
 
