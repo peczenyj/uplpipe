@@ -114,7 +114,7 @@ sub _upload_file_to_s3 {
 	my ($self,$keyname,$file) = @_;
 	$self->log_debug("add $keyname to bucket");
 	
-	$self->add_file_to_bucket($keyname,$file) 
+	$self->add_file_to_bucket($keyname,$file, { content_disposition => 'attachment'})
 		and do { 
 			my $check = $self->_check_file_exist($keyname,$file);
 			$self->some_error("store $keyname in s3 but check file returns false") unless $check;
@@ -133,7 +133,10 @@ sub change_download_url_for {
 	my ($self,$keyname) = @_;
 	$self->log_debug("change download url for $keyname");
 
-	my $response = $self->post_to_uplpipe($self->uplpipe_url_for($keyname), url => $self->s3url_for($keyname));	
+	$self->log_debug(" post to : ", $self->uplpipe_url_for($keyname));
+	$self->log_debug(" url : ", $self->s3url_for($keyname));
+	
+	my $response = $self->post_to_uplpipe($self->uplpipe_url_for($keyname), {url => $self->s3url_for($keyname)});	
 	$self->lwp_error($response->status_line) unless($response->is_success);
 	
 	$response->is_success
@@ -177,7 +180,7 @@ sub on_success {
 sub on_error {
 	my ($self,$file) = @_;
 	
-	$self->log_error("one or more errors: ". $self->get_errors);
+	$self->log_error("one or more errors for file $file: ". $self->get_errors);
 	
 	0;
 }

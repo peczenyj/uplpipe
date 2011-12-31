@@ -14,6 +14,7 @@ class TestServlet extends HttpServlet {
 	override def doPost(req : HSReq, resp : HSResp) = req.getRequestURI() match { 
 			case patternUrl(uuid,null)      => UploadController create(uuid,req,resp) 
 			case patternUrl(uuid,"message") => UploadController message(uuid,req,resp)
+			case patternUrl(uuid,"link")    => UploadController link(uuid,req,resp)
 			case _                          => UploadController sendError(404,resp)
 	}
 	
@@ -31,11 +32,17 @@ object UploadController {
 	
 	def message(uuid : String, req : HSReq, resp : HSResp)  = {
 		val txt = req getParameter("message")
-		val url = req getParameter("download")
+		val url = req.getRequestURI.replace("/message","/download")
 		req.getSession.getServletContext.log("txt=> '%s'".format(txt))
 		
-		//resp.setContentType("text/html; charset=UTF-8");
-		resp.getWriter.print(messageTemplate(txt,url))
+		resp.setContentType("text/html; charset=UTF-8");
+		resp.getWriter.print(messageTemplate(txt,url.toString))
+	}
+	
+	def link(uuid : String, req : HSReq, resp : HSResp){
+		val url = req getParameter("url")
+		req.getSession.getServletContext.log("url=> '%s'".format(url))
+		session.setComplete(uuid, new URL(url))
 	}
 	
 	def status(uuid : String, req : HSReq, resp : HSResp)   = {
@@ -53,7 +60,9 @@ object UploadController {
 		if(status != "completed") sendError(404,resp) else
 		url.getProtocol match {
 			case "file" => transferFileTo(url,resp)
-			case _      => resp sendRedirect url.toString   
+			case _      => 
+				resp setContentType("application/x-download")
+				resp sendRedirect url.toString   
 		}
 	}
 	
@@ -75,12 +84,16 @@ object UploadController {
 			val contentLength = req getContentLength()
 			val boundary      = extractBoundary(req getContentType())
 			var input         = new MultipartReader(inputStream,contentLength, uuid)
-			val reader        = new MultipartParser(input, boundary)
-			val url           = reader.toMap.getOrElse("f", errorFileNotFound)
+			val reader        = new MultipartParser(input, boundary,uuid)
+			val tmpfile       = reader.toMap.getOrElse("f",errorFileNotFound)
+			val file          = new File(tmpfile.getPath.replace("incoming-",""))
+			tmpfile.renameTo(file)
+			
+			var url           = new URL("file","",file.getPath)
 			session.setComplete(uuid,url)
 		} catch { 
 			case e => session.setError(uuid) 
-			throw e 
+			resp.sendError(500, e.toString);
 		}
 	}
 
@@ -120,7 +133,7 @@ object session {
 	val db = new HashMap[String,(Double,String,URL)]
 	def hasNot( uuid :String):Boolean                 = ! db.isDefinedAt(uuid)
 	def setError( uuid :String )                      = db(uuid)  = (       0.0, "error"      ,null)
-	def setComplete( uuid :String, file :URL)         = db(uuid)  = (     100.0, "completed"   ,file)
+	def setComplete( uuid :String, file :URL)         = db(uuid)  = (     100.0, "completed"  ,file)
 	def setProgress(uuid :String, percentage :Double) =	db(uuid)  = (percentage, "in progress",null)
 	def get( uuid: String ): (Double,String,URL)      = db getOrElse(uuid, (0.0, "not started", null))
 }
@@ -132,7 +145,7 @@ object util {
 		chan.close() ; fos.close()
 	}
 }
-class MultipartParser(input :MultipartReader, boundary :String) extends Iterator[(String,URL)] {
+class MultipartParser(input :MultipartReader, boundary :String, uuid: String) extends Iterator[(String,File)] {
 	var lastContentDisposition = ""
 	
 	if (! input.readLine.startsWith(boundary) ) throw new Exception("data corrupt")
@@ -145,11 +158,11 @@ class MultipartParser(input :MultipartReader, boundary :String) extends Iterator
 		!lastContentDisposition.isEmpty && !contentType.isEmpty && emptyLine.isEmpty
 	}
 		
-	def next: (String, URL) = {
+	def next: (String,File) = {
 		val fieldName  = extractFieldName(lastContentDisposition)
 		val fileName   = extractFilename(lastContentDisposition)
 		
-		val file  = new File("%s/%s-%s".format(Config.basePath,UUID.randomUUID().toString(),fileName))
+		val file  = new File("%s/incoming-%s".format(Config.basePath,uuid))
 		val fos   = new FileOutputStream(file)
 		val out   = new BufferedOutputStream(fos, 8*1024)
 		val bbuf  = new Array[Byte](8*1024)
@@ -157,14 +170,15 @@ class MultipartParser(input :MultipartReader, boundary :String) extends Iterator
 		var result = -1
 		while({ result = input.readLine(bbuf, 0, bbuf.length) 
 				result != -1 && ! reach_end_of_part(bbuf,result) }){
-			out.write(bbuf, 0, result);
+			//if(fieldName != name)
+				out.write(bbuf, 0, result);
 		}
 		
 		out.flush ; out.close ; fos.close
 		
 		util.truncate(file)
 		
-		(fieldName -> new URL("file","",file.getPath))
+		(fieldName,file)
 	}
 
 	def reach_end_of_part(bbuf :Array[Byte], result:Int) : Boolean = 
