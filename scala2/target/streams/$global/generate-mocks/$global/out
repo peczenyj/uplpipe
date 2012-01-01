@@ -1,0 +1,14 @@
+[0m[[0mdebug[0m] [0mPlain interface to Scala compiler 2.9.1.final  with arguments: [0m
+[0m[[0mdebug[0m] [0m	-Xplugin:/Users/peczenyj/.ivy2/cache/org.scalamock/scalamock-compiler-plugin_2.9.1/jars/scalamock-compiler-plugin_2.9.1-2.1.jar[0m
+[0m[[0mdebug[0m] [0m	-Xplugin-require:scalamock[0m
+[0m[[0mdebug[0m] [0m	-Ylog:generatemocks[0m
+[0m[[0mdebug[0m] [0m	-Ystop-after:generatemocks[0m
+[0m[[0mdebug[0m] [0m	-P:scalamock:generatemocks:/Users/peczenyj/pessoal/up/uplpipe/scala2/target/scala-2.9.1/src_managed/mock/scala[0m
+[0m[[0mdebug[0m] [0m	-P:scalamock:generatetest:/Users/peczenyj/pessoal/up/uplpipe/scala2/target/scala-2.9.1/src_managed/test/scala[0m
+[0m[[0mdebug[0m] [0m	-d[0m
+[0m[[0mdebug[0m] [0m	/Users/peczenyj/pessoal/up/uplpipe/scala2/target/scala-2.9.1/generate-mocks-classes[0m
+[0m[[0mdebug[0m] [0m	-bootclasspath[0m
+[0m[[0mdebug[0m] [0m	/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/jsfd.jar:/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/classes.jar:/System/Library/Frameworks/JavaVM.framework/Frameworks/JavaRuntimeSupport.framework/Resources/Java/JavaRuntimeSupport.jar:/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/ui.jar:/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/laf.jar:/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/sunrsasign.jar:/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/jsse.jar:/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/jce.jar:/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Classes/charsets.jar:/Users/peczenyj/.sbt/boot/scala-2.9.1/lib/scala-library.jar[0m
+[0m[[0mdebug[0m] [0m	-cp[0m
+[0m[[0mdebug[0m] [0m	/Users/peczenyj/pessoal/up/uplpipe/scala2/target/scala-2.9.1/classes:/Users/peczenyj/.ivy2/cache/org.scalamock/scalamock-scalatest-support_2.9.1/jars/scalamock-scalatest-support_2.9.1-2.1.jar:/Users/peczenyj/.ivy2/cache/org.scalamock/scalamock-core_2.9.1/jars/scalamock-core_2.9.1-2.1.jar:/Users/peczenyj/.ivy2/cache/org.scalatest/scalatest_2.9.1/jars/scalatest_2.9.1-1.6.1.jar:/Users/peczenyj/.ivy2/cache/javax/javaee-api/jars/javaee-api-6.0.jar[0m
+[0m[[0mdebug[0m] [0m	/Users/peczenyj/pessoal/up/uplpipe/scala2/src/generate-mocks/scala/GenerateMocks.scala[0m
