@@ -1,6 +1,0 @@
-Revision history for Perl extension Uplpipe::Agent.
-
-0.01  Thu Dec 29 09:50:26 2011
-	- original version; created by h2xs 1.23 with options
-		-XAn Uplpipe::Agent
-
