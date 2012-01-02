@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<project name="scala-intro" default="build">
+	<property name="scala.home" location="/Users/peczenyj/Downloads/scala-2.9.1.final"/>
+	<property name="glassfish.home" location="/Applications/NetBeans/glassfish-3.1/glassfish"/>
+	<property name="glassfish.admin.port" value="4848"/>
+	
+	<property name="war.file" location="uplpipe.war"/>
+	
+	<target name="war">
+		<war destfile="${war.file}" webxml="src/main/webapp/WEB-INF/web.xml" update="true">
+			<fileset dir="../frontend/html"/>
+			<!-- <lib dir="${scala.home}/lib">
+				<include name="scala-library.jar"/>
+			</lib> -->		
+			<lib dir="target/scala-2.9.1">
+				<include name="uplpipe_2.9.1-0.1.jar"/>
+			</lib>
+		</war>	
+	</target>
+
+	<target name="deploy" depends="war">
+	  <asadmin failonerror="true">
+	    <arg value="deploy" />
+	 	<arg value="--name=scala" />
+	    <arg value="--force=true" />
+	    <arg value="${war.file}" />
+	  </asadmin>
+	</target>
+
+	<target name="build" depends="war">
+		<echo>done</echo>
+	</target>
+	
+	<target name="clean">
+		<delete file="scala.war"/>
+	</target>	
+	
+	<presetdef name="asadmin">
+	  <java jar="${glassfish.home}/modules/admin-cli.jar" fork="true" jvm="${java.home}/bin/java" >
+	    <arg line="--port ${glassfish.admin.port}" />
+	  </java>
+	</presetdef>		
+</project>

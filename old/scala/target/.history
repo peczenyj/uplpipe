@@ -1,0 +1,76 @@
+set name := "uplpipe"
+set libraryDependencies += "javax.servlet" % "servlet-api" % "3.0"
+session save
+reload
+update
+reload
+update
+compile
+package
+exit
+update
+session save
+reload
+jetty-run
+project web
+help
+container:start
+compile
+update
+reload
+session save
+compile plugin
+compile plugins
+quit
+exit
+container:start
+reload
+container:start
+container:stop
+container:start
+reload
+update
+container:start
+container:stop
+reload
+update
+container:start
+package
+container:reload /
+container:reload /scala
+container:reload /upload
+container:reload /uplpipe
+container:reload
+container:stop
+update
+reload
+container:start
+compile
+container:start
+container:stop
+container:start
+package
+exit
+quit
+exit
+exiy
+eit
+exit
+compile
+package
+package-war
+exit
+package-bin
+exit
+generate-mocks
+update
+compile
+update
+reload
+update
+help
+library-dependencies
+tasks
+q
+quit
+exit
