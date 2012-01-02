@@ -1,3 +1,5 @@
+package com.example
+
 import java.net.URL
 import java.util.UUID
 import java.io.{File, FileOutputStream, FileInputStream, BufferedOutputStream}
@@ -8,7 +10,7 @@ import scala.collection.mutable.HashMap
 
 @WebServlet(name = "UploadServlet", urlPatterns = Array("/upload/*"))
 @MultipartConfig(maxFileSize=1024*1024*700, maxRequestSize=1024*1024*700)
-class TestServlet extends HttpServlet {
+class UploadServlet extends HttpServlet {
 	val patternUrl = ".*/upload/([a-fA-F0-9]{12}-[^/]*)(?:/(\\w+))?$".r
 		
 	override def doPost(req : HSReq, resp : HSResp) = req.getRequestURI() match { 
@@ -41,7 +43,6 @@ object UploadController {
 	
 	def link(uuid : String, req : HSReq, resp : HSResp){
 		val url = req getParameter("url")
-		req.getSession.getServletContext.log("url=> '%s'".format(url))
 		session.setComplete(uuid, new URL(url))
 	}
 	
@@ -131,9 +132,10 @@ object Config {
 }
 object session {
 	val db = new HashMap[String,(Double,String,URL)]
+	def setComplete( uuid :String, file :URL)         = db(uuid)  = (     100.0, "completed"  ,file)
+		
 	def hasNot( uuid :String):Boolean                 = ! db.isDefinedAt(uuid)
 	def setError( uuid :String )                      = db(uuid)  = (       0.0, "error"      ,null)
-	def setComplete( uuid :String, file :URL)         = db(uuid)  = (     100.0, "completed"  ,file)
 	def setProgress(uuid :String, percentage :Double) =	db(uuid)  = (percentage, "in progress",null)
 	def get( uuid: String ): (Double,String,URL)      = db getOrElse(uuid, (0.0, "not started", null))
 }
@@ -170,7 +172,6 @@ class MultipartParser(input :MultipartReader, boundary :String, uuid: String) ex
 		var result = -1
 		while({ result = input.readLine(bbuf, 0, bbuf.length) 
 				result != -1 && ! reach_end_of_part(bbuf,result) }){
-			//if(fieldName != name)
 				out.write(bbuf, 0, result);
 		}
 		

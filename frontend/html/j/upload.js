@@ -1,5 +1,5 @@
+// based on: http://note19.com/2007/05/27/javascript-guid-generator/
 Util = {
-	// based on: http://note19.com/2007/05/27/javascript-guid-generator/
 	S4: function() { return (((1+Math.random())*0x10000)|0).toString(16).substring(1); },
 	S12 : function(){ return Util.S4()+Util.S4()+Util.S4();}
 };
@@ -10,27 +10,29 @@ function UploadProgressReporter(form,options){
 	this.target = $("#" + options.target_id);
 	this.message_url = "{URL}/message".replace("{URL}",options.upload_url);
 	
-	this.template_progress  = "Status {VALUE} %";
-	this.template_completed = "Status: 100%. <a href=\"{LINK}\">Uploaded to here.</a>"
+	this.template_progress  = "<progress value=\"{VALUE}\" max=\"100\"/> Status {VALUE} %";
+	this.template_completed = "Status: 100%. Upload completed. click <a href=\"{LINK}\">here</a> to download"
 }
 
 UploadProgressReporter.prototype = {
 	show_start : function(){
 		this.form.hide();
 		
-		this.panel.html(this.template_progress.replace("{VALUE}",0));
+		this.panel.html(this.template_progress.replace(/{VALUE}/g,0));
 	},
 	show_progress: function(data){
 		
-		this.panel.html(this.template_progress.replace("{VALUE}",data.percentage));	
+		this.panel.html(this.template_progress.replace(/{VALUE}/g,data.percentage));	
 	},
 	show_completed: function(data){
 		
-		this.panel.html(this.template_completed.replace("{LINK}",data.link));
-		this.target.attr('action','/scala/message');
-		$('input[name=file]',this.target).attr("value",data.link)
+		this.panel.html(this.template_completed.replace(/{LINK}/g,data.link));
+		this.target.attr('action',this.message_url);
 		$('input[type=submit]',this.target).removeAttr('disabled');
-	}	
+	},
+	show_error: function(){
+		this.panel.html('Ops... some error happens with this request, please try again');
+	}
 }
 
 function UploadProgressObserver(form,options){
@@ -62,15 +64,21 @@ UploadProgressObserver.prototype = {
 		this.upr.show_completed(data);		
 	},		
 	on_ajax_success: function(data) {
-		if(data.status === "complete" || data.percentage === 100.0){
+		if(data.status == "error"){
+			this.on_error()
+		} if(data.status === "complete" || data.percentage === 100.0){
 			this.on_complete(data);
 		} else if (data.percentage > this.last_progress){
 			this.on_progress(data);
 		} 
 	},
-	on_error : function(jqXHR, textStatus, errorThrown){
+	on_error : function (){
 		this._stopAjaxLoop(this.interval_id);
-		console.log("ops..." , textStatus, errorThrown);
+		this.upr.show_error();
+	},
+	on_ajax_error : function(jqXHR, textStatus, errorThrown){
+		this._stopAjaxLoop(this.interval_id);
+		//console.log("ops..." , textStatus, errorThrown);
 	},	
 	load : function(){
 		var self = this;
@@ -80,23 +88,10 @@ UploadProgressObserver.prototype = {
             dataType: 'json',
             url: self._generateStatusUrl(),
 			success: function(data, textStatus){self.on_ajax_success(data, textStatus)},
-			error: function(jqXHR, textStatus, errorThrown){self.on_error(jqXHR, textStatus, errorThrown)},
+			error: function(jqXHR, textStatus, errorThrown){self.on_ajax_error(jqXHR, textStatus, errorThrown)}
         });
 	},
 	_generateStatusUrl : function(){
-		// to upload:
-		// POST /upload/xxxx-someFile.zip
-		// to watch the status upload:
-		// GET /upload/xxxx-someFile.zip/status OR
-		// GET /upload/xxxx-someFile.zip/status?timestamp  -- to avoid cache et all.
-		// returns 
-		//    { percentage : y, status: text, link : www}
-		// where:
-		//      y is the percentage progress
-		// status is some status message (progress|complete|error)
-		// link   is the url to download content
-		// otherwise: 404
-		
 		var template = "{URL}/status";
 		return template.replace("{URL}",this.options.upload_url);
 	}	
@@ -130,24 +125,29 @@ UplPipe.prototype = {
 		return this;	
 	},
 	generateIFrame: function(){
-		$("<iframe>")
-			.attr({ id : this.iframe_id, name : this.iframe_id})
+		var iframe;
+		try {
+			// to avoid IE problems...
+		    iframe = document.createElement('<iframe name="' + this.iframe_id + '">');
+		} catch (ex) {
+		    iframe = document.createElement('iframe');
+		    iframe.name= this.iframe_id;
+		}	
+		$(iframe)
+			.attr({ id : this.iframe_id})
 			.width(0).height(0).css('border','none').hide()
-			.appendTo(this.form);
+			.appendTo(this.form.parent());
+			
 		return this;
 	},
 	_getFileName : function(){
-		return this.file[0].files[0].fileName;
+		// fix becouse IE does not understand the old code
+		return $(this.file).val().split(/[/\\]/).reverse()[0];
 	},
 	_id : function(){
 		return Util.S12();	
 	},
 	_generateUploadUrl : function(){	
-		// upload url for someFile.zip
-		// POST /baseurl/xxxxxxxxxxx-someFile.zip
-		// where xxxx is a 12digit hexadecimal number
-		// to avoid filename colision
-		
 		var template = "{BASEURL}/{ID}-{FILENAME}";
 		this.options.upload_url = template
 			.replace('{BASEURL}',this.options.baseurl)
@@ -188,4 +188,4 @@ UplPipe.prototype = {
 	submitForm: function(){
 		this.form.submit();
 	}
-}; 
+};

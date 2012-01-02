@@ -1,8 +1,6 @@
-- basic form, html and css
-- javascript with pooling
-- connection_class
-- session mechanism
-- deployment
-- remove dep. AnyEvent::HTTPD, JSON and UUID::Tiny
-- improve tests
-- client tests
+- tests in scala ; unit
+- tests in servlet (curl ?) ; functional
+- remove link from state (if not in local storage, is in s3)
+- simplify the state (status, progress)
+- simplify javascript and improve tests
+- deploy with tests

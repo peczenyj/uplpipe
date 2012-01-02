@@ -7,11 +7,11 @@
 	<property name="war.file" location="uplpipe.war"/>
 	
 	<target name="war">
-		<war destfile="${war.file}" webxml="src/main/etc/web.xml" update="true">
+		<war destfile="${war.file}" webxml="src/main/webapp/WEB-INF/web.xml" update="true">
 			<fileset dir="../frontend/html"/>
-			<lib dir="${scala.home}/lib">
+			<!-- <lib dir="${scala.home}/lib">
 				<include name="scala-library.jar"/>
-			</lib>			
+			</lib> -->		
 			<lib dir="target/scala-2.9.1">
 				<include name="uplpipe_2.9.1-0.1.jar"/>
 			</lib>
