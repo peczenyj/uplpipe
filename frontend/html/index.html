@@ -1,16 +1,36 @@
 <html>
 	<head>
-		<!-- <meta http-equiv="content-type" content="text/html;charset=UTF-8" /> -->
+		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
 		<title>uplpipe</title>
-		<script src="/scala/j/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
-		<script src="/scala/j/upload.js" type="text/javascript" charset="utf-8"></script>
+		<style type="text/css" media="screen">
+			#progress {display: none;}
+			#complete {display: none;}
+			#error    {display: none;}
+			#progress p {display: inline; margin: 0 10px 0 0;}
+			iframe    {display: none;}
+		</style>
+		<script src="./j/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="./j/upload.js" type="text/javascript" charset="utf-8"></script>
 	</head>
 	<body>
 		<h1>Upload pipe, a pipe from your computer to the cloud</h1>
-		<div id="panel"></div>
-	
+		
 		<div>
-			<input type="file" name="f" id="f"/>
+			<div id="progress" class="panel">
+				<p><progress value="0" max="100"/></p><p>Status: <span id="percentage">0</span>%</p>
+			</div>
+			<div id="complete" class="panel">
+				<p>Status: 100%. Upload completed. click <a id="download-link" href="#">here</a> to download</p>
+			</div>
+			<div id="error" class="panel">
+				<p>Ops... some error happens with this request, please click <a href="/">here</a> and try again</p>
+			</div>
+		</div>
+	
+		<div id="emitter">
+			<form id="emitter-form" method="post" action="#" target="iframe-hidden" enctype="multipart/form-data" encoding="multipart/form-data" accept-charset="UTF-8">
+				<input type="file" name="f" id="f"/>
+			</form>
 		</div>
 		
 		<div>
@@ -19,13 +39,11 @@
 				<input type="submit" value="Continue &rarr;" disabled="true">
 			</form>
 		</div>
+		<iframe name="iframe-hidden" id="iframe-hidden"></iframe>
 		<script type="text/javascript" charset="utf-8">
 		$(document).ready(function(){
 			new UplPipe($('#f'),{
-				baseurl : "/scala/upload",
-				target_id : "the-form",
-				interval : 2000,
-				panel_id : "panel"
+				baseurl : "", interval : 2000,
 			}).init()
 		 });
 		</script>		

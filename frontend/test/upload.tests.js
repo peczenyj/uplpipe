@@ -1,180 +1,165 @@
 function main(){
 	module("UplPipe");
 	
-	test("UplPipe Constructor should be initialize file, option and iframe_id attributes", function(){
-        expect(3);
-        var file = $('<input type="file"/>');
+	test("UplPipe Constructor should be initialize file with attributes", function(){
+        expect(6);
+
+		var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
         
 		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
+			baseurl : "/basepath",
 			interval : 2000,
-			panel_id : "panel"
 		};
 		
 		var uplpipe = new UplPipe(file,options);
 		
         equals(uplpipe.file , file);
         equals(uplpipe.options, options);
-        equals(uplpipe.iframe_id, "uplpipe-temp");  
+        equals(uplpipe.errors, 0);  
+		equals(uplpipe.max_errors,5);
+		equals(uplpipe.last_progress, -1.0);
+		equals(uplpipe.form.html(),form.html());
     });
 	
-	test("method generateForm should create a form tag outside to input file", function(){
-		expect(1);
-		
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options).generateForm();
-		
-		equals($('<form><input type="file"/></form>').html(), uplpipe.form.html() );
-	});
-	
-	test("method generateIFrame should create an iframe with id, name and 0 size", function(){
-		expect(4);
-		
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options)
-			.generateForm()
-			.generateIFrame();
-		
-		var form = $(uplpipe.form);
-		equals($('iframe',form).attr('id'),uplpipe.iframe_id);
-		equals($('iframe',form).attr('name'),uplpipe.iframe_id);
-		equals($('iframe',form).width(),0);
-		equals($('iframe',form).height(),0);
-	});
-	
-	test("method prepareForm should set action, method, enctype and target attributes",function(){
-		expect(5);
-		
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options)
-			.generateForm()
-			.generateIFrame();
-		
-		// mock _generateUploadUrl
-		uplpipe._generateUploadUrl = function() { return "/a/b/c/d"; };	
-		uplpipe.prepareForm();
-			
-		var form = $(uplpipe.form);	
-
-		equals(form.attr('action'),uplpipe._generateUploadUrl());
-		equals(form.attr('target'), uplpipe.iframe_id);
-		equals(form.attr('method'),'post');
-		equals(form.attr('enctype'),'multipart/form-data');
-		equals(form.attr('encoding'),'multipart/form-data');	
-	});
-
-	test("method on_file_change calls 4 methods in cascade",function(){
-		expect(4);
-		
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options);
-		
-		var call_gf = false, call_gi = false, call_pf = false, call_sf = false;
-		
-		// lots of mocks...
-		uplpipe.generateForm   = function() { call_gf = true; return this;};
-		uplpipe.generateIFrame = function() { call_gi = true; return this;};
-		uplpipe.prepareForm    = function() { call_pf = true; return this;};
-		uplpipe.submitForm     = function() { call_sf = true };
-		
-		uplpipe.on_file_change();
-		
-		ok(call_gf,"generateForm called");
-		ok(call_gi,"generateIFrame called");
-		ok(call_pf,"prepareForm called");
-		ok(call_sf,"submitForm called");
-	});
-	
-	test("method init should attach on_file_change in change event of file object and return this", function(){
+	test("method init should bind change event with prepareFormAndSubmit method ", function(){
 		expect(2);
-		var file = $('<input type="file"/>');
+		
+		var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
         
 		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
+			baseurl : "/basepath",
 			interval : 2000,
-			panel_id : "panel"
 		};
 		
 		var uplpipe = new UplPipe(file,options);
-		var call_ofc = false;
 		
-		uplpipe.on_file_change = function(){
-			call_ofc = true;
-		};
+		var prepare_called = false;
+		uplpipe.prepareFormAndSubmit = function() {prepare_called = true; };
+		var setup_called = false;
+		uplpipe.setupDOMObjects = function(){ setup_called = true; };
 		
-		var z = uplpipe.init();
-		
-		ok(z == uplpipe);
-		
+		uplpipe.init();
+		ok(setup_called, "setupDomObjects called");
 		file.change();
-		
-		ok(call_ofc,"on_file_change called");
+		ok(prepare_called, "prepareFormAndSubmit called");
 	});
 	
-	test("method _generateUploadUrl should create an url using random numbers",function(){
-		expect(1);
-		var file = $('<input type="file"/>');
+	test("method setupDomObjects should attach some elements in object", function(){
+		expect(9);
+		
+		var html = '<div>'
+		+ '<div id="progress" class="panel">'
+		+ '<p><progress value="0" max="100"/> Status: <span id="percentage">0</span>%</p>'
+		+ '</div>'
+		+ '<div id="complete" class="panel">'
+		+ '<p>Status: 100%. Upload completed. click <a id="download-link" href="#">here</a> to download</p>'
+		+ '</div>'
+		+ '<div id="error" class="panel">'
+		+ '<p>Ops... some error happens with this request, please try again</p>'
+		+ '</div>'
+		+ '</div>'
+		+ '<div id="emitter">'
+		+ '<form id="emitter-form" method="post" action="#" target="iframe-hidden" enctype="multipart/form-data" encoding="multipart/form-data" accept-charset="UTF-8">'
+		+ '<input type="file" name="f" id="f"/>'
+		+ '</form>'
+		+ '</div>'
+		+ '<div>'
+		+ '<form id="the-form" action="#" method="post" accept-charset="utf-8">'
+		+ '<textarea name="message" rows="5" cols="60"></textarea></p>'
+		+ '<input type="submit" value="Continue &rarr;" disabled="true">'
+		+ '</form>'
+		+ '</div>' ;
+			
+		var form=$(html);
+		$('body').append(form);
+        var file = form.find("#f");
         
 		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
+			baseurl : "/basepath",
 			interval : 2000,
-			panel_id : "panel"
+		};
+		
+		var uplpipe = new UplPipe(file,options);
+		uplpipe.setupDOMObjects();
+		
+		ok(uplpipe.panel.html()        == $('.panel').html());
+		ok(uplpipe.progress_div.html()     == $('#progress').html());
+		ok(uplpipe.progress_bar.html()     == $('progress').html());
+		
+		ok(uplpipe.error.html()        == $('#error').html());
+		ok(uplpipe.downloadLink.html() == $('a#download-link').html());
+		ok(uplpipe.complete.html()     == $('#complete').html());
+		ok(uplpipe.form2.html()        == $('form#the-form').html());
+		ok(uplpipe.form2submit.html()  == $('form#the-form input[type=submit]').html());
+		ok(uplpipe.percentage.html()   == $('span#percentage').html());
+	});
+	
+	test("method prepareFormAndSubmit should call _generateUrls, change action in form and bind onSubmit event", function(){
+		expect(3);
+		
+		var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
+        
+		var options = {
+			baseurl : "/basepath",
+			interval : 2000,
 		};
 		
 		var uplpipe = new UplPipe(file,options);
 		
-		uplpipe._id = function(){ return "fecobebecafe"; };
-		uplpipe._getFileName = function(){ return "test.pdf";};
-		var url = uplpipe._generateUploadUrl();
+		var gen_urls_calls = false;
+		uplpipe._generateUrls = function() { gen_urls_calls = true };
+		var onsubmit_calls = false; 
+		uplpipe.startAjaxPooling = function() { onsubmit_calls = true; };
+		uplpipe.upload_url = "#";
 		
-		equals(url,"/scalaExamples/upload/fecobebecafe-test.pdf");
+		uplpipe.prepareFormAndSubmit();
+		
+		form.submit();
+		
+		ok(gen_urls_calls, "_generateUrls called");
+		ok(onsubmit_calls, "onSubmit called");
+		equals(form.attr('action'),uplpipe.upload_url,"action should be '#'");
 	});
 	
+	test("method _generateUrls should create urls",function(){
+		expect(4);
+		
+		var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
+        
+		var options = {
+			baseurl : "/basepath",
+			interval : 2000,
+		};
+		
+		var uplpipe = new UplPipe(file,options);
+		uplpipe._getFileName = function(){ return "a.txt"; }
+		uplpipe._id = function(){ return "ABCDABCD1234";}
+		
+		uplpipe._generateUrls();
+		
+		equals(uplpipe.upload_url,"/basepath/upload/ABCDABCD1234-a.txt");
+		equals(uplpipe.upload_status_url,"/basepath/upload/ABCDABCD1234-a.txt/status");
+		equals(uplpipe.upload_download_url,"/basepath/upload/ABCDABCD1234-a.txt/download");
+		equals(uplpipe.upload_message_url,"/basepath/upload/ABCDABCD1234-a.txt/message");
+	});
+
 	test("method _getFileName should return the filename", function(){
 		expect(1);
-		var file =  [ { files : [ {fileName : "/dev/null"} ] } ] ;
+		var file =  $('<input value="/path/to/a.txt"/>');
 		var uplpipe = new UplPipe(file,{});
-		equals('/dev/null',uplpipe._getFileName(),"it is not possible test by setting some value using javascript (security)");
+		equals('a.txt',uplpipe._getFileName(),"it is not possible test by setting some value using javascript (security)");
 	});
-	
+
 	test("method _id should return a different 12bit hex number", function(){
 		expect(3);	
-		var uplpipe = new UplPipe(null,{});
+		var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
+		
+		var uplpipe = new UplPipe(file,{});
 		
 		var id1 = uplpipe._id();
 		var id2 = uplpipe._id();
@@ -184,443 +169,108 @@ function main(){
 
 		notEqual(id1,id2,"maybe it can be false, but rare!");
 	});
-	
-	test("method submitForm should submit the form", function(){
-		expect(1);
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options);
 
-		var submit_ok = false;
-		uplpipe.form = { submit : function(){ submit_ok = true; } };
-
-		uplpipe.submitForm();
-		
-		ok(submit_ok);
-	});
-	
-	test("method prepareForm should attach on_form_submit in submit event", function(){
-		expect(1);
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options);
-		uplpipe.form = $('<form></form>');
-		
-		var call_on_form_submit = false;
-		
-		uplpipe.on_form_submit = function(){ 
-			call_on_form_submit = true; 
-			return false;
-		};
-		uplpipe._generateUploadUrl = function(){ return "http://google.com/x/"; }
-		
-		uplpipe.prepareForm();
-			
-		uplpipe.form.submit();
-		
-		ok(call_on_form_submit);
-	});
-	
-	test("method on_form_submit should call create_upload_progress_observer and init this", function(){
-		expect(2);
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options);
-		
-		var call_cupo = false;
-		var call_upo_init = false;
-		
-		uplpipe.create_upload_progress_observer = function(){
-			call_cupo = true;
-			return { 
-				// returns a upload progress observer mock...
-				init : function(){ 
-					call_upo_init = true;
-				} 
-			};
-		};
-		
-		uplpipe.on_form_submit();
-		ok(call_cupo);
-		ok(call_upo_init);
-	});
-	
-	test("method create_upload_progress_observer should create an UploadProgressObserver reference", function(){
-		expect(4);
-		var file = $('<input type="file"/>');
-        
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel"
-		};
-		
-		var uplpipe = new UplPipe(file,options);
-		uplpipe.form = $('<form></form>');
-
-		var obj = uplpipe.create_upload_progress_observer();
-		
-		equals(obj.form,uplpipe.form);
-		equals(obj.options,options);
-		equals(obj.last_progress,-1.0);
-		equals(typeof(obj.init),"function");
-	});
-	
-	module('UploadProgressObserver');
-	
-	test("constructor should init form, options and last_progress attribute", function(){
+	test("method startAjaxPooling should show progress and start a interval!", function(){
 		expect(4);
 		
-		var form = $('<form></form>');
+		var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
+        
 		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
+			baseurl : "/basepath",
 			interval : 2000,
-			timeout: 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
 		};
 		
-		var upo = new UploadProgressObserver(form,options);
-		equals(upo.form , form);
-		equals(upo.options, options);
-		equals(upo.last_progress,-1.0);
-		equals(typeof(upo.upr), "object");
-	});
-	
-	test("method _generateStatusUrl should concat /status at the end of url", function(){
-		expect(1);
+		var uplpipe = new UplPipe(file,options);
 		
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
+		uplpipe.ajaxPooling = function(){ ok(true); };
 		
-		var upo = new UploadProgressObserver(form,options);
-		var url = upo._generateStatusUrl();
-		equals("/scalaExamples/upload/aabbccdd1234-test.pdf/status",url);
+		var code;
+		var interval;
+		uplpipe._setInterval = function(_code,_interval){code = _code; interval = _interval};
+		
+		uplpipe.panel=$('<a></a>');
+		uplpipe.emitter=$('<a></a>');
+		uplpipe.progress_div=$('<a></a>').hide();
+		
+		uplpipe.startAjaxPooling();
+		
+		code();
+		equals(interval,options.interval);
+		equals(uplpipe.panel.attr('style'),"display: none; ");
+		equals(uplpipe.progress_div.attr('style'),"");
 	});
-	
-	asyncTest("method load starts ajax and should call on_ajax_success if success", function(){
+
+	asyncTest("method ajaxPooling starts ajax and should call onAjaxError if fails", function(){
         expect(1);
+		
         var json_response = {
             percentage: 50,
         };
-
+		var url_status = "/basepath/upload/aabbccdd1254-test.pdf/status";
         $.mockjax({ // mock ajax request
-            url: "/scalaExamples/upload/aabbccdd1234-test.pdf/status",
+            url: url_status,
             dataType: "json",
             response: function(){
-                start(); // for asyncTest
+                 start(); // for asyncTest
+            },
+			status: 500,
+            responseTime: 0,
+            responseText: json_response
+        });
+
+        var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
+        
+		var options = {
+			baseurl : "/basepath",
+			interval : 2000,
+		};
+		
+		var uplpipe = new UplPipe(file,options);
+		uplpipe.upload_status_url = url_status;
+		
+        uplpipe.onAjaxError = function(j,data,t){
+            ok(true);
+        }
+        uplpipe.ajaxPooling();
+    });
+	
+	asyncTest("method ajaxPooling starts ajax and should call onAjaxSuccess if success", function(){
+        expect(1);
+		
+        var json_response = {
+            percentage: 50,
+        };
+		var url_status = "/basepath/upload/aabbccdd1234-test.pdf/status";
+        $.mockjax({ // mock ajax request
+            url: url_status,
+            dataType: "json",
+            response: function(){
+                 start(); // for asyncTest
             },
             responseTime: 0,
             responseText: json_response
         });
 
-        var form = $('<form></form>');
+        var form=$('<form><input type="file" name="f" id="f"/></form>');
+        var file = form.find("#f");
+        
 		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
+			baseurl : "/basepath",
 			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
 		};
 		
-		var upo = new UploadProgressObserver(form,options);
-        upo.on_ajax_success = function(data){
+		var uplpipe = new UplPipe(file,options);
+		uplpipe.upload_status_url = url_status;
+		
+        uplpipe.onAjaxSuccess = function(data,t){
             equals(json_response.percentage, data.percentage);
         }
-
-        upo.load();
+        uplpipe.ajaxPooling();
     });
-	
-	asyncTest("method load starts ajax and should call on_error if error", function(){
-        expect(1);
 
-        $.mockjax({ // mock ajax request
-            url: "/scalaExamples/upload/aabbccdd1235-test.pdf/status",
-            response: function(){
-                start(); // for asyncTest
-            },
-            status: 500,
-            responseTime: 0,
-			responseText: "Internal Server Error"
-        });
-
-        var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1235-test.pdf"
-		};
-		
-		var upo = new UploadProgressObserver(form,options);
-		
-        upo.on_error = function(j,a,b){
-            equals(a, "error");
-        }
-
-        upo.load();
-    });	
-
-	test("method on_ajax_success should call on on_progress if percentage > last_progress", function(){
-		expect(1);
-		
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var data = { percentage : 50 };
-		var upo = new UploadProgressObserver(form,options);		
-		
-		upo.on_progress = function(_data){
-			equals(_data,data);
-		};
-		
-		upo.on_ajax_success(data);
-	});
 	
-	test("method on_ajax_success should not call on on_progress if percentage <= last_progress", function(){
-		expect(1);
-		
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var data = { percentage : 50 };
-		var upo = new UploadProgressObserver(form,options);		
-		upo.last_progress = 51;
-		
-		var on_progress_call = false;
-		upo.on_progress = function(_data){
-			on_progress_call = true;
-		};
-		
-		upo.on_ajax_success(data);
-		
-		ok(!on_progress_call, "should not call on_progress");
-	});
-	
-	test("method on_ajax_success should call on_complete if percentage is 100%", function(){
-		expect(1);
-		
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var data = { percentage : 100 };
-		var upo = new UploadProgressObserver(form,options);		
-		
-		upo.on_complete = function(_data){
-			equals(_data,data);
-		};
-		
-		upo.on_ajax_success(data);
-	});	
-	
-	test("method on_ajax_success should call on_complete if status is complete", function(){
-		expect(1);
-		
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var data = { status : "complete" };
-		var upo = new UploadProgressObserver(form,options);		
-		
-		upo.on_complete = function(_data){
-			equals(_data,data);
-		};
-		
-		upo.on_ajax_success(data);
-	});		
-		
-	test("method on_complete should call _stopAjaxLoop and upr.show_completed", function(){
-		expect(2);
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var data = { status : "complete" };
-		var upo = new UploadProgressObserver(form,options);		
-		
-		var call_stopAjaxLoop = false;
-		upo._stopAjaxLoop = function(){ call_stopAjaxLoop = true;}
-		
-		var call_upr_show_completed = false;
-		upo.upr.show_completed = function(){ call_upr_show_completed = true; }
-		
-		upo.on_complete(data);
-		
-		ok(call_stopAjaxLoop);
-		ok(call_upr_show_completed);
-	});
-	
-	test("method on_progress should update last_progress and call upr.show_progress", function(){
-		expect(3);
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var data = { percentage : 50 };
-		var upo = new UploadProgressObserver(form,options);		
-				
-		var call_show_progress = false;
-		upo.upr.show_progress = function(){ call_show_progress = true; }
-		
-		equal(upo.last_progress,-1.0);
-		
-		upo.on_progress(data);
-		
-		equal(upo.last_progress,data.percentage);
-		ok(call_show_progress);		
-		
-	});
-	test("method on_erro should call _stopAjaxLoop and report error", function(){
-		expect(1);
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var data = { percentage : 50 };
-		var upo = new UploadProgressObserver(form,options);		
-		
-		var call_stopAjaxLoop = false;
-		upo._stopAjaxLoop = function(){ call_stopAjaxLoop = true;}
-		
-		upo.on_error(data);
-		
-		ok(call_stopAjaxLoop);
-	});
-	
-	test("function init should call create_interval and upr.show_start",function(){
-		expect(2);
-		var form = $('<form></form>');
-		var options = {
-			baseurl : "/scalaExamples/upload",
-			target_id : "the-form",
-			interval : 2000,
-			panel_id : "panel",
-			upload_url : "/scalaExamples/upload/aabbccdd1234-test.pdf"
-		};
-		
-		var upo = new UploadProgressObserver(form,options);	
-		
-		var call_create_interval = false;
-		upo.create_interval = function(){ call_create_interval = true;};
-		
-		var call_upr_show_start = false;
-		upo.upr.show_start = function(){call_upr_show_start = true;};
-		
-		upo.init();
-		
-		ok(call_create_interval);
-		ok(call_upr_show_start);	
-	});
-	
-	test("function _stopAjaxLoop should clean interval",function(){
-		expect(1);
-	});
-	
-	test('function create_interval should create interval', function(){
-		expect(1);
-	})
-
-	module('UploadProgressReporter');
-	
-	test('constructor',function(){});
-	test('method show_start',function(){});
-	test('method show_progress',function(){});
-	test('method show_completed',function(){});
-			
-	module('Util');
-
-	test("Util.S4 should return some random hex value", function(){
-		expect(3);	
-		
-		var id1 = Util.S4();
-		var id2 = Util.S4();
-		
-		ok(/[0-9a-fA-F]{4}/.test(id1), "id = " + id1 + ", is a 4 char hex");
-		ok(/[0-9a-fA-F]{4}/.test(id2), "id = " + id2 + ", is a 4 char hex");
-
-		notEqual(id1,id2,"maybe it can be false, but rare!");		
-	});	
-	
-	test("Util.S12 should return some random hex value", function(){
-		expect(3);	
-		
-		var id1 = Util.S12();
-		var id2 = Util.S12();
-		
-		ok(/[0-9a-fA-F]{12}/.test(id1), "id = " + id1 + ", is a 12 char hex");
-		ok(/[0-9a-fA-F]{12}/.test(id2), "id = " + id2 + ", is a 12 char hex");
-
-		notEqual(id1,id2,"maybe it can be false, but rare!");		
-	});
 }
 
 $(document).ready(main);
