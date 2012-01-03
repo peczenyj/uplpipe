@@ -7,7 +7,6 @@ use Digest::MD5::File;
 use Net::Amazon::S3;
 use Log::Log4perl;
 use Data::Dumper;
-use LWP::UserAgent;
 use Moose;
 
 our $VERSION = '0.01';
@@ -35,13 +34,6 @@ has 's3' => (
 	},
 	lazy => 1,	
 	default => sub { Net::Amazon::S3->new( shift->conf()->{amazon} ) }
-);
-
-has 'ua' => (
-	is => 'rw',
-	handles => {post_to_uplpipe => 'post'},
-	lazy => 1,	
-	default => sub { LWP::UserAgent->new( %{shift->conf()->{lwp_user_agent}} ) }
 );
 
 has 'bucket' => (
@@ -84,7 +76,6 @@ sub process{
 	
 	$self->upload_file_if_necessary($keyname,$file)
 		and $self->change_acl_to_public_read($keyname)
-		and $self->change_download_url_for($keyname)
 		and $self->delete_file($file)
 		and $self->on_success($file)
 		or  $self->on_error($file)
@@ -127,32 +118,6 @@ sub change_acl_to_public_read{
 	$self->log_debug("change acl for $keyname");
 		
 	$self->set_acl_to_bucket({ key => $keyname, acl_short => 'public-read' });
-}
-
-sub change_download_url_for {
-	my ($self,$keyname) = @_;
-	$self->log_debug("change download url for $keyname");
-
-	$self->log_debug(" post to : ", $self->uplpipe_url_for($keyname));
-	$self->log_debug(" url : ", $self->s3url_for($keyname));
-	
-	my $response = $self->post_to_uplpipe($self->uplpipe_url_for($keyname), {url => $self->s3url_for($keyname)});	
-	$self->lwp_error($response->status_line) unless($response->is_success);
-	
-	$response->is_success
-}
-
-sub uplpipe_url_for {
-	my ($self,$keyname) = @_;
-	my $url = $self->uplpipe_url;
-	$url =~ s/:id/$keyname/;
-	$url
-}
-
-sub s3url_for {
-	my ($self,$keyname) = @_;
-	
-	sprintf "http://s3.amazonaws.com/%s/%s", $self->bucketname, $keyname
 }
 
 sub delete_file {

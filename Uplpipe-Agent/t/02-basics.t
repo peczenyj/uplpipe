@@ -29,15 +29,6 @@ sub get_s3_valid {
 	$s3
 }
 
-sub get_ua_valid {
-	my $ua        = Test::MockObject->new();
-	my $resp_mock = Test::MockObject->new();
-	$resp_mock->set_true('is_success');
-	$ua->set_always('post', $resp_mock);
-	
-	$ua
-}
-
 sub get_logger_valid {
 	my $logger = Test::MockObject->new();	
 	$logger->set_true('debug','info','error');
@@ -61,15 +52,6 @@ sub ok_s3 {
 	$bucket->called_ok('set_acl','should call set_acl to modify acls');
 	$bucket->called_ok('add_key_filename','should call add key filename');
 }
-sub ok_ua{
-	my $ua = shift;
-	$ua->called_ok('post', 'post method should be called');
-	$ua->called_args_pos_is(1,2,'http://localhost:8080/scala/upload/a/download','should post url to uplpipe');
-	$ua->called_args_pos_is(1,3,'url','should pass url key');
-	$ua->called_args_pos_is(1,4,'http://s3.amazonaws.com/uplpipe/a','should pass url value');
-	my $resp = $ua->post();
-	$resp->called_ok('is_success', "post success should be verified")
-}
 sub ok_logger {
 	my $logger = shift;
 	$logger->called_pos_ok(-1,'info','should call logger->info at the end');
@@ -78,14 +60,12 @@ sub ok_logger {
 
 subtest "happy path" => sub {
 	my $s3     = get_s3_valid;
-	my $ua     = get_ua_valid;
 	my $logger = get_logger_valid;
 	my $file   = get_file;
 	
 	my $agent  = Uplpipe::Agent->new( 
 		conf   => $conf,
 		s3     => $s3,
-		ua     => $ua,
 		logger => $logger,
 	);
 	
@@ -99,7 +79,6 @@ subtest "happy path" => sub {
 	
 	ok($result, "process status should be true");
 	ok_s3($s3);
-	ok_ua($ua);
 	ok_logger($logger);
 };
 
@@ -117,14 +96,12 @@ sub get_s3_different_etags {
 
 subtest "upload file if file in s3 was different" => sub {
 	my $s3     = get_s3_different_etags;
-	my $ua     = get_ua_valid;
 	my $logger = get_logger_valid;
 	my $file   = get_file;
 	
 	my $agent  = Uplpipe::Agent->new( 
 		conf   => $conf,
 		s3     => $s3,
-		ua     => $ua,
 		logger => $logger,
 	);
 	
@@ -138,7 +115,6 @@ subtest "upload file if file in s3 was different" => sub {
 	
 	ok($result, "process status should be true");
 	ok_s3($s3);
-	ok_ua($ua);
 	ok_logger($logger);
 };
 
@@ -166,14 +142,12 @@ sub ok_s3_file_already_uploaded {
 
 subtest "file in s3, just do the rest" => sub {
 	my $s3     = get_s3_file_already_uploaded;
-	my $ua     = get_ua_valid;
 	my $logger = get_logger_valid;
 	my $file   = get_file;
 	
 	my $agent  = Uplpipe::Agent->new( 
 		conf   => $conf,
 		s3     => $s3,
-		ua     => $ua,
 		logger => $logger,
 	);
 	
@@ -187,7 +161,6 @@ subtest "file in s3, just do the rest" => sub {
 	
 	ok($result, "process status should be true");
 	ok_s3_file_already_uploaded($s3);
-	ok_ua($ua);
 	ok_logger($logger);
 };
 
@@ -200,14 +173,12 @@ sub ok_logger_error{
 
 subtest "failure in unlink file" => sub {
 	my $s3     = get_s3_valid;
-	my $ua     = get_ua_valid;
 	my $logger = get_logger_valid;
 	my $file   = get_file;
 	
 	my $agent  = Uplpipe::Agent->new( 
 		conf   => $conf,
 		s3     => $s3,
-		ua     => $ua,
 		logger => $logger,
 	);
 	
@@ -218,53 +189,9 @@ subtest "failure in unlink file" => sub {
 	
 	ok(! $result, "process status should be true");
 	ok_s3($s3);
-	ok_ua($ua);
 	ok_logger_error($logger, 'one or more errors for file /not/exist/a: No such file or directory');	
 };
 
-sub get_ua_invalid{
-	my $ua        = Test::MockObject->new();
-	my $resp_mock = Test::MockObject->new();
-	$resp_mock->set_false('is_success');
-	$resp_mock->set_always('status_line','ops');
-	$ua->set_always('post', $resp_mock);
-	
-	$ua	
-}
-
-sub ok_ua_invalid{
-	my $ua = shift;
-	$ua->called_ok('post', 'post method should be called');
-	$ua->called_args_pos_is(1,2,'http://localhost:8080/scala/upload/a/download','should post url to uplpipe');
-	$ua->called_args_pos_is(1,3,'url','should pass url key');
-	$ua->called_args_pos_is(1,4,'http://s3.amazonaws.com/uplpipe/a','should pass url value');
-	my $resp = $ua->post();
-	$resp->called_ok('is_success', "post success should be verified");
-	$resp->called_ok('status_line', "should verify the status line")
-}
-subtest "failure in update rest api" => sub {
-	my $s3     = get_s3_valid;
-	my $ua     = get_ua_invalid;
-	my $logger = get_logger_valid;
-	my $file   = get_file;
-	
-	my $agent  = Uplpipe::Agent->new( 
-		conf   => $conf,
-		s3     => $s3,
-		ua     => $ua,
-		logger => $logger,
-	);
-	
-	my $md5module = new Test::MockModule('Digest::MD5::File');
-	$md5module->mock('file_md5_hex', sub { 'md5'; });	
-	
-	my $result = $agent->process($file);
-	
-	ok(! $result, "process status should be true");
-	ok_s3($s3);
-	ok_ua_invalid($ua);
-	ok_logger_error($logger, 'one or more errors for file /not/exist/a: ops');	
-};
 
 sub get_s3_invalid {
 	my $s3     = Test::MockObject->new();
@@ -288,21 +215,14 @@ sub ok_s3_invalid{
 	$bucket->called_ok('add_key_filename','should call add key filename');
 }
 
-sub ok_ua_not_call {
-	my $ua = shift;
-	ok(! $ua->called('post') , 'post method should NOT be called');
-}
-
 subtest "failure in update acl in s3" => sub {
 	my $s3     = get_s3_invalid;
-	my $ua     = get_ua_valid;
 	my $logger = get_logger_valid;
 	my $file   = get_file;
 	
 	my $agent  = Uplpipe::Agent->new( 
 		conf   => $conf,
 		s3     => $s3,
-		ua     => $ua,
 		logger => $logger,
 	);
 	
@@ -313,7 +233,6 @@ subtest "failure in update acl in s3" => sub {
 	
 	ok(! $result, "process status should be true");
 	ok_s3_invalid($s3);
-	ok_ua_not_call($ua);
 	ok_logger_error($logger, 'one or more errors for file /not/exist/a: >err:>errstr');	
 };
 
@@ -337,21 +256,14 @@ sub ok_s3_invalid2 {
 	$bucket->called_ok('add_key_filename','should call add key filename');
 }
 
-sub ok_ua_invalid2{
-	my $ua = shift;
-	ok(! $ua->called('post'), 'post should no be called');
-}
-
 subtest "upload successfull but head_key shows different etag/md5" => sub {
 	my $s3     = get_s3_invalid2;
-	my $ua     = get_ua_valid;
 	my $logger = get_logger_valid;
 	my $file   = get_file;
 	
 	my $agent  = Uplpipe::Agent->new( 
 		conf   => $conf,
 		s3     => $s3,
-		ua     => $ua,
 		logger => $logger,
 	);
 	
@@ -365,7 +277,6 @@ subtest "upload successfull but head_key shows different etag/md5" => sub {
 	
 	ok(! $result, "process status should be false");
 	ok_s3_invalid2($s3);
-	ok_ua_invalid2($ua);
 	ok_logger_error($logger, 'one or more errors for file /not/exist/a: store a in s3 but check file returns false');
 };
 
@@ -383,14 +294,12 @@ sub get_s3_invalid3{
 
 subtest "failure to upload to s3" => sub {
 	my $s3     = get_s3_invalid3;
-	my $ua     = get_ua_valid;
 	my $logger = get_logger_valid;
 	my $file   = get_file;
 	
 	my $agent  = Uplpipe::Agent->new( 
 		conf   => $conf,
 		s3     => $s3,
-		ua     => $ua,
 		logger => $logger,
 	);
 	
@@ -404,7 +313,6 @@ subtest "failure to upload to s3" => sub {
 	
 	ok(! $result, "process status should be false");
 	ok_s3_invalid2($s3);
-	ok_ua_invalid2($ua);
 	ok_logger_error($logger, 'one or more errors for file /not/exist/a: >err:>errstr');	
 };
 
