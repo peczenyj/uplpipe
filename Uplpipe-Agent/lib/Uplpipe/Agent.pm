@@ -229,10 +229,9 @@ Constructor of Uplpipe, just configuration object is required.
 
 =head2 process
 
-Process one file (Path::Class::File) in three phases.
+Process one file (Path::Class::File) in two phases.
 
 First: check in s3 for some key in bucketname and compares the etag/md5, if none match, stores the file. 
-Second: change the download url this file in uplpipe using the filename as id.
 Final: delete the file from local storage.
 
 return success if all phases return ok - see log file for more information in case of failure
@@ -264,16 +263,6 @@ Handles:
 
 Provides: 
 	bucket attribute
-
-=head2 ua
-
-Attribute for LWP::UserAgent instance, to post new url in uplpipe rest service.
-
-Default: 
-	new instance with $conf->{lwp_user_agent} value
-
-Handles:
-	post_to_uplpipe => 'post
 	
 =head2 bucket
 
