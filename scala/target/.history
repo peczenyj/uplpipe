@@ -1,0 +1,138 @@
+reload
+update
+reload
+update
+reload
+update
+compile
+project web
+container:start
+container:stop
+container:state
+container:stop
+container:start
+container:stop
+container:reload
+container:reload 
+container:reload /
+container:configuration-xml
+show container:configuration-xml
+container:apps
+show container:apps
+container:stop
+container:start
+container:stats
+container:state
+exit
+compile
+generate-mocks
+test
+container:start
+container:stop
+exit
+container:port
+set container:port 80
+set container:port := 80
+set container:port := "80"
+set container:port 
+container:custom-configuration
+container:streams
+compile
+package
+container:streams
+container:start
+exit
+container:start
+exit
+clean
+compile
+container:start
+clean
+compile
+container:start
+container:stop
+exit
+container:start
+exit
+compile
+container:start
+container:restart
+container:reload
+container:reload 
+container:reload /
+container:reload /upload
+container:reload /upp
+container:reload /
+exit
+container:start
+exit
+container:start
+exit
+container:start
+exit
+container:start
+exit
+container:configuration-xml
+container:configuration-files
+container:port
+container:configuration
+override def jettyPort = 80
+show configuration
+set port in container.Configuration := 8081
+set port in container.Configuration := 80
+session save
+container:start
+exit
+container:start
+set port in container.Configuration := 81
+container:start
+set port in container.Configuration := 2000
+container:start
+exit
+set port in container.Configuration := 80
+container:start
+generate-mocks
+test
+exit
+package
+sbt clean
+clean
+update
+reload
+update
+compile
+package
+clean
+package-configuration
+show package-configuration
+package-options
+show package-options
+package-war
+library-dependencies
+reload
+library-dependencies
+reload
+update
+package
+clean
+reload
+update
+package-war
+container:sta
+container:start
+generate-mocks
+compile
+generate-mocks
+compile
+generate-mocks
+reload
+generate-mocks
+tests
+test
+clean
+generate-mocks
+test
+container:start
+package-war
+clean
+exit

@@ -2,7 +2,7 @@ package com.uplpipe
 
 import java.io.{File, FileOutputStream, FileInputStream, BufferedOutputStream}
 import javax.servlet.ServletInputStream
-import javax.servlet.annotation.{ MultipartConfig, WebServlet }
+//import javax.servlet.annotation.{ MultipartConfig, WebServlet }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest => HSReq, HttpServletResponse => HSResp }
 import scala.collection.mutable.HashMap
 import org.apache.log4j.{BasicConfigurator, Logger, FileAppender, PatternLayout}
@@ -23,8 +23,8 @@ object session {
 	def get( uuid: String ): (Double,String)          = db getOrElse(uuid, (0.0, "not started"))
 }
 
-@WebServlet(name = "UploadServlet", urlPatterns = Array("/upload/*"))
-@MultipartConfig(maxFileSize=1024*1024*700, maxRequestSize=1024*1024*700)
+//@WebServlet(name = "UploadServlet", urlPatterns = Array("/upload/*"))
+//@MultipartConfig(maxFileSize=1024*1024*700, maxRequestSize=1024*1024*700)
 class UploadServlet extends HttpServlet {
 	val webapp  = new UplpipeWebApp
 	val patternUrl = ".*/upload/([a-fA-F0-9]{12}-[^/]*)(?:/(\\w+))?$".r

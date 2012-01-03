@@ -1,0 +1,51 @@
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+		<title>uplpipe</title>
+		<style type="text/css" media="screen">
+			#progress {display: none;}
+			#complete {display: none;}
+			#error    {display: none;}
+			#progress p {display: inline; margin: 0 10px 0 0;}
+			iframe    {display: none;}
+		</style>
+		<script src="./j/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="./j/upload.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<body>
+		<h1>Upload pipe, a pipe from your computer to the cloud</h1>
+		
+		<div>
+			<div id="progress" class="panel">
+				<p><progress value="0" max="100"/></p><p>Status: <span id="percentage">0</span>%</p>
+			</div>
+			<div id="complete" class="panel">
+				<p>Status: 100%. Upload completed. click <a id="download-link" href="#">here</a> to download</p>
+			</div>
+			<div id="error" class="panel">
+				<p>Ops... some error happens with this request, please click <a href="/">here</a> and try again</p>
+			</div>
+		</div>
+	
+		<div id="emitter">
+			<form id="emitter-form" method="post" action="#" target="iframe-hidden" enctype="multipart/form-data" encoding="multipart/form-data" accept-charset="UTF-8">
+				<input type="file" name="f" id="f"/>
+			</form>
+		</div>
+		
+		<div>
+			<form id="the-form" action="#" method="post" accept-charset="utf-8">
+				<textarea name="message" rows="5" cols="60"></textarea></p>
+				<input type="submit" value="Continue &rarr;" disabled="true">
+			</form>
+		</div>
+		<iframe name="iframe-hidden" id="iframe-hidden"></iframe>
+		<script type="text/javascript" charset="utf-8">
+		$(document).ready(function(){
+			new UplPipe($('#f'),{
+				baseurl : "", interval : 2000,
+			}).init()
+		 });
+		</script>		
+	</body>
+</html>
