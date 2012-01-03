@@ -94,7 +94,7 @@ class UplpipeWebApp {
 				<p>File: click <a href={url}>here</a> to download</p>
 				<p>Message:</p>
 				<textarea cols="60" rows="5">{msg}</textarea>
-				<p>please send another file <a href="/">here</a>
+				<p>please send another file <a href="/">here</a></p>
 			</body>
 		</html>
 	}
