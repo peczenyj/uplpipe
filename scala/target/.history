@@ -136,3 +136,16 @@ container:start
 package-war
 clean
 exit
+package-war
+reload
+update
+package-war
+package-bin
+package-src
+clean
+package
+package-bin
+clean
+compile
+package
+exit

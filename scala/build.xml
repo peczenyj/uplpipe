@@ -7,7 +7,7 @@
 	
 	<target name="war">
 		<war destfile="${war.file}" webxml="src/main/webapp/WEB-INF/web.xml" update="true">
-			<fileset dir="../frontend/html"/>	
+			<fileset dir="src/main/webapp/"/>	
 			<lib dir="target/scala-2.9.1">
 				<include name="uplpipe_2.9.1-0.1.jar"/>
 			</lib>
@@ -22,10 +22,10 @@
 		<delete file="${war.file}"/>
 	</target>
 	
-	<target name="deploy" depends="war">
+	<target name="deploy">
 	  <asadmin failonerror="true">
 	    <arg value="deploy" />
-	 	<arg value="--name=u" />
+	 	<arg value="--name=uplpipe" />
 	    <arg value="--force=true" />
 	    <arg value="${war.file}" />
 	  </asadmin>

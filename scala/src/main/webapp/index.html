@@ -1,6 +1,9 @@
+<html itemscope itemtype="http://schema.org/Product">
 <html>
 	<head>
 		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+		<meta itemprop="name" content="Upload Pipe">
+		<meta itemprop="description" content="A good way to do that">		
 		<title>uplpipe</title>
 		<style type="text/css" media="screen">
 			#progress {display: none;}
@@ -38,14 +41,15 @@
 				<textarea name="message" rows="5" cols="60"></textarea></p>
 				<input type="submit" value="Continue &rarr;" disabled="true">
 			</form>
+			<g:plusone annotation="inline" width="300"></g:plusone>
 		</div>
 		<iframe name="iframe-hidden" id="iframe-hidden"></iframe>
 		<script type="text/javascript" charset="utf-8">
 		$(document).ready(function(){
 			new UplPipe($('#f'),{
-				baseurl : "", interval : 2000,
+				baseurl : "", interval : 2000
 			}).init()
 		 });
-		</script>		
+		</script>						
 	</body>
 </html>

@@ -9,7 +9,7 @@ import org.apache.log4j.{BasicConfigurator, Logger, FileAppender, PatternLayout}
 
 object Config {
 	def chunk      = 8*1024
-	def basePath   = "/tmp"
+	def basePath   = "/uploads"
 	def fieldName  = "f"
 	def bucketname = "uplpipe"
 }
@@ -93,7 +93,7 @@ class UplpipeWebApp {
 			<body>
 				<p>File: click <a href={url}>here</a> to download</p>
 				<p>Message:</p>
-				<textarea cols="60" rows="5">{msg}</textarea>
+				<p>{msg}</p>
 				<p>please send another file <a href="/">here</a></p>
 			</body>
 		</html>

@@ -1,6 +1,0 @@
-- tests in scala ; unit
-- tests in servlet (curl ?) ; functional
-- remove link from state (if not in local storage, is in s3)
-- simplify the state (status, progress)
-- simplify javascript and improve tests
-- deploy with tests

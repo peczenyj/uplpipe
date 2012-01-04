@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use common::sense;
 use Uplpipe::Agent;
 use Daemon::Generic;
@@ -27,7 +28,7 @@ sub gd_run {
 	my $watcher = POE::Component::DirWatch->new(
 		alias      => 'dirwatch',
 		directory  =>  $conf->{daemon}->{directory},
-		filter     => sub { $_[0] !~ /^incoming.*$/ },
+		filter     => sub { $_[0]->basename !~ /^incoming.*$/ },
 		file_callback => sub{ 
 			my $file = shift; $agent->process($file) 
 		},
