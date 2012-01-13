@@ -9,7 +9,7 @@ import org.apache.log4j.{BasicConfigurator, Logger, FileAppender, PatternLayout}
 
 object Config {
 	def chunk      = 8*1024
-	def basePath   = "/uploads"
+	def basePath   = "/tmp"
 	def fieldName  = "f"
 	def bucketname = "uplpipe"
 }
