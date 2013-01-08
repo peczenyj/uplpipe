@@ -1,4 +1,3 @@
-
 seq(webSettings :_*)
 
 name := "Uplpipe"
@@ -15,6 +14,8 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-webapp" % "8.0.1.v20110908" % "container",
   "javax.servlet" % "servlet-api" % "2.5" % "provided"
 )
+
+libraryDependencies += "org.mortbay.jetty" % "jetty" % "6.1.22" % "container"
 
 libraryDependencies += "org.scalamock" %% "scalamock-scalatest-support" % "latest.integration" % "test"
 
